@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de ecuaciones de segundo grado</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Patrick+Hand&display=swap');
+
+        :root {
+            --paper: #fffdf7;
+            --paper-line: #dce8f8;
+            --sky: #eaf6ff;
+            --mint: #eafcf4;
+            --ink: #1c2a3a;
+            --muted: #5b6f84;
+            --accent: #2f80ed;
+            --accent-soft: #cfe5ff;
+            --ok: #1f9a68;
+            --danger: #c43c4d;
+            --warn-bg: #fff4db;
+            --warn-border: #f6cf73;
+            --shadow: 0 14px 30px rgba(35, 63, 95, 0.14);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: "Nunito", "Segoe UI", sans-serif;
+            color: var(--ink);
+            background:
+                radial-gradient(circle at 15% 12%, rgba(120, 186, 255, 0.28), transparent 38%),
+                radial-gradient(circle at 87% 10%, rgba(116, 230, 185, 0.22), transparent 35%),
+                linear-gradient(155deg, #f3fbff, #eef8ff 45%, #f6fff9);
+            display: grid;
+            place-items: center;
+            padding: 20px;
+        }
+
+        .panel {
+            width: min(760px, 100%);
+            background:
+                repeating-linear-gradient(
+                    to bottom,
+                    var(--paper),
+                    var(--paper) 34px,
+                    var(--paper-line) 35px
+                );
+            border: 2px solid #e3eefb;
+            border-radius: 18px;
+            box-shadow: var(--shadow);
+            padding: 26px;
+            animation: reveal 520ms ease;
+            position: relative;
+        }
+
+        .panel::before {
+            content: "";
+            position: absolute;
+            left: 24px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: rgba(255, 140, 140, 0.5);
+        }
+
+        @keyframes reveal {
+            from {
+                opacity: 0;
+                transform: translateY(10px) scale(0.99);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        h1 {
+            margin: 0 0 8px;
+            font-family: "Patrick Hand", "Comic Sans MS", cursive;
+            font-size: clamp(2rem, 2.2vw + 1rem, 2.8rem);
+            line-height: 1.1;
+            color: #244a76;
+        }
+
+        .subtitle {
+            margin: 0 0 22px;
+            color: var(--muted);
+            font-size: 1rem;
+        }
+
+        .formula-card {
+            margin: 0 0 18px;
+            background: linear-gradient(120deg, var(--sky), #f4fbff);
+            border: 1px solid #cfe6ff;
+            border-radius: 12px;
+            padding: 12px 14px;
+            font-size: 1.06rem;
+        }
+
+        .formula-card strong {
+            display: block;
+            margin-bottom: 6px;
+            color: #255181;
+        }
+
+        .inputs {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(120px, 1fr));
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        input {
+            width: 100%;
+            border: 1px solid #c8d7e8;
+            border-radius: 12px;
+            padding: 10px 12px;
+            font-size: 1rem;
+            font-family: inherit;
+            background: #ffffff;
+            transition: border-color 180ms ease, box-shadow 180ms ease;
+        }
+
+        input:focus {
+            border-color: var(--accent);
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(47, 128, 237, 0.2);
+        }
+
+        input.input-error {
+            border-color: var(--danger);
+            background: #fff4f6;
+            box-shadow: 0 0 0 3px rgba(196, 60, 77, 0.14);
+        }
+
+        button {
+            border: none;
+            border-radius: 14px;
+            padding: 12px 18px;
+            font-size: 1rem;
+            font-weight: 700;
+            font-family: inherit;
+            background: linear-gradient(120deg, #58a6ff, #2f80ed);
+            color: #fff;
+            cursor: pointer;
+            transition: transform 120ms ease, box-shadow 120ms ease;
+            box-shadow: 0 8px 18px rgba(47, 128, 237, 0.28);
+        }
+
+        button:hover {
+            transform: translateY(-1px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .result,
+        .steps {
+            margin-top: 18px;
+            padding: 14px;
+            border-radius: 14px;
+            background: #ffffffde;
+            border: 1px solid #d8e8fb;
+        }
+
+        .result h2,
+        .steps h2 {
+            margin: 0 0 10px;
+            font-size: 1.05rem;
+        }
+
+        .error-box {
+            margin-top: 12px;
+            border: 1px solid #efb2ba;
+            background: #fff3f5;
+            color: #8f2230;
+            border-radius: 12px;
+            padding: 10px 12px;
+            font-weight: 700;
+        }
+
+        .message-error {
+            color: var(--danger);
+            font-weight: 600;
+        }
+
+        .disc-box {
+            margin-top: 10px;
+            border: 1px solid var(--warn-border);
+            background: var(--warn-bg);
+            border-radius: 12px;
+            padding: 10px 12px;
+        }
+
+        .disc-title {
+            margin: 0 0 6px;
+            font-size: 0.96rem;
+            color: #8a5a00;
+            font-weight: 800;
+        }
+
+        .sol {
+            margin: 6px 0;
+            font-size: 1.03rem;
+        }
+
+        .badge {
+            display: inline-block;
+            background: var(--accent-soft);
+            color: #164d87;
+            border: 1px solid #b8d9ff;
+            border-radius: 999px;
+            padding: 3px 10px;
+            font-size: 0.84rem;
+            font-weight: 800;
+            margin-bottom: 8px;
+        }
+
+        ol {
+            margin: 0;
+            padding-left: 20px;
+            line-height: 1.5;
+        }
+
+        .steps li {
+            margin-bottom: 8px;
+        }
+
+        .foot-note {
+            margin-top: 14px;
+            color: #607187;
+            font-size: 0.94rem;
+            font-style: italic;
+        }
+
+        @media (max-width: 700px) {
+            .panel {
+                padding: 18px;
+                border-radius: 16px;
+            }
+
+            .inputs {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main class="panel">
+        <h1>Calculadora de ecuaciones de segundo grado</h1>
+        <p class="subtitle">Ficha para 2º ESO: completa los datos, pulsa resolver y sigue los pasos para entender el proceso.</p>
+
+        <section class="formula-card" aria-label="Formula general">
+            <strong>Formula de la ecuacion de segundo grado</strong>
+            <div>\[ax^2 + bx + c = 0\]</div>
+            <div>\[x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}\]</div>
+        </section>
+
+        <section class="inputs" aria-label="Coeficientes">
+            <div>
+                <label for="a">Valor de a</label>
+                <input type="text" id="a" inputmode="decimal" placeholder="Ej: 1 o 0.5">
+            </div>
+            <div>
+                <label for="b">Valor de b</label>
+                <input type="text" id="b" inputmode="decimal" placeholder="Ej: -3">
+            </div>
+            <div>
+                <label for="c">Valor de c</label>
+                <input type="text" id="c" inputmode="decimal" placeholder="Ej: 2">
+            </div>
+        </section>
+
+        <button id="solveBtn" type="button">Resolver</button>
+
+        <div class="error-box" id="errorBox" role="alert" aria-live="assertive" hidden></div>
+
+        <section class="result" id="result" aria-live="polite">
+            <h2>Soluciones</h2>
+            <p>Completa los valores y pulsa resolver.</p>
+        </section>
+
+        <section class="steps" id="steps">
+            <h2>Pasos</h2>
+            <p>Aqui veras la explicacion paso a paso.</p>
+        </section>
+
+        <p class="foot-note">Consejo: tambien puedes escribir decimales con coma, por ejemplo 1,5.</p>
+    </main>
+
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [["\\(", "\\)"]],
+                displayMath: [["\\[", "\\]"]]
+            },
+            svg: {
+                fontCache: "global"
+            }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+    <script>
+        const aInput = document.getElementById("a");
+        const bInput = document.getElementById("b");
+        const cInput = document.getElementById("c");
+        const solveBtn = document.getElementById("solveBtn");
+        const resultBox = document.getElementById("result");
+        const stepsBox = document.getElementById("steps");
+        const errorBox = document.getElementById("errorBox");
+
+        function runMathJax() {
+            if (window.MathJax && typeof window.MathJax.typesetPromise === "function") {
+                window.MathJax.typesetPromise([resultBox, stepsBox]).catch(() => {});
+            }
+        }
+
+        function clearInputErrors() {
+            [aInput, bInput, cInput].forEach((input) => input.classList.remove("input-error"));
+        }
+
+        function showError(message, invalidInputs) {
+            clearInputErrors();
+            invalidInputs.forEach((input) => input.classList.add("input-error"));
+            errorBox.textContent = message;
+            errorBox.hidden = false;
+            resultBox.innerHTML = "<h2>Soluciones</h2><p class='message-error'>No se puede resolver hasta corregir los datos.</p>";
+            stepsBox.innerHTML = "<h2>Pasos</h2><p>Primero corrige el error indicado y vuelve a pulsar resolver.</p>";
+            runMathJax();
+        }
+
+        function hideError() {
+            errorBox.hidden = true;
+            errorBox.textContent = "";
+        }
+
+        function parseValue(raw) {
+            const text = raw.trim().replace(",", ".");
+            if (text === "") {
+                return { ok: false, reason: "empty" };
+            }
+            const value = Number(text);
+            if (!Number.isFinite(value)) {
+                return { ok: false, reason: "nan" };
+            }
+            return { ok: true, value: value };
+        }
+
+        function formatNum(value) {
+            if (!Number.isFinite(value)) {
+                return "No definido";
+            }
+            return Number(value.toFixed(4)).toString();
+        }
+
+        solveBtn.addEventListener("click", () => {
+            clearInputErrors();
+            hideError();
+
+            const parsedA = parseValue(aInput.value);
+            const parsedB = parseValue(bInput.value);
+            const parsedC = parseValue(cInput.value);
+
+            if (!parsedA.ok || !parsedB.ok || !parsedC.ok) {
+                const invalid = [];
+                if (!parsedA.ok) invalid.push(aInput);
+                if (!parsedB.ok) invalid.push(bInput);
+                if (!parsedC.ok) invalid.push(cInput);
+
+                const hasEmpty = [parsedA, parsedB, parsedC].some((item) => item.reason === "empty");
+                if (hasEmpty) {
+                    showError("Todos los campos (a, b y c) son obligatorios.", invalid);
+                } else {
+                    showError("Escribe numeros validos. Puedes usar punto o coma decimal.", invalid);
+                }
+                return;
+            }
+
+            const a = parsedA.value;
+            const b = parsedB.value;
+            const c = parsedC.value;
+
+            if (a === 0) {
+                showError("En una ecuacion de segundo grado, el valor de a no puede ser 0.", [aInput]);
+                return;
+            }
+
+            const delta = b * b - 4 * a * c;
+            const denominator = 2 * a;
+
+            let resultHtml = "<h2>Soluciones</h2>";
+            resultHtml += "<span class='badge'>Resultado final</span>";
+
+            let stepItems = [
+                "Sustituimos en la ecuacion general: \\[" + formatNum(a) + "x^2 + (" + formatNum(b) + ")x + (" + formatNum(c) + ") = 0\\]",
+                "Calculamos el discriminante con la formula \\(\\Delta = b^2 - 4ac\\).",
+                "Sustitucion: \\[\\Delta = (" + formatNum(b) + ")^2 - 4\\cdot(" + formatNum(a) + ")\\cdot(" + formatNum(c) + ") = " + formatNum(delta) + "\\]"
+            ];
+
+            resultHtml += "<div class='disc-box'><p class='disc-title'>Discriminante destacado</p><div>\\[\\Delta = " + formatNum(delta) + "\\]</div></div>";
+
+            if (delta > 0) {
+                const sqrtDelta = Math.sqrt(delta);
+                const x1 = (-b + sqrtDelta) / denominator;
+                const x2 = (-b - sqrtDelta) / denominator;
+
+                resultHtml += "<p class='sol'>Hay dos soluciones reales:</p>";
+                resultHtml += "<p class='sol'><strong>\\(x_1 = " + formatNum(x1) + "\\)</strong></p>";
+                resultHtml += "<p class='sol'><strong>\\(x_2 = " + formatNum(x2) + "\\)</strong></p>";
+
+                stepItems.push("Como \\(\\Delta > 0\\), hay dos soluciones reales distintas.");
+                stepItems.push("Aplicamos la formula: \\[x = \\frac{-b \\pm \\sqrt{\\Delta}}{2a}\\]");
+                stepItems.push("Primera solucion: \\[x_1 = \\frac{-(" + formatNum(b) + ") + \\sqrt{" + formatNum(delta) + "}}{2\\cdot(" + formatNum(a) + ")} = " + formatNum(x1) + "\\]");
+                stepItems.push("Segunda solucion: \\[x_2 = \\frac{-(" + formatNum(b) + ") - \\sqrt{" + formatNum(delta) + "}}{2\\cdot(" + formatNum(a) + ")} = " + formatNum(x2) + "\\]");
+            } else if (delta === 0) {
+                const x = -b / denominator;
+
+                resultHtml += "<p class='sol'>Hay una solucion real doble:</p>";
+                resultHtml += "<p class='sol'><strong>\\(x = " + formatNum(x) + "\\)</strong></p>";
+
+                stepItems.push("Como \\(\\Delta = 0\\), las dos soluciones coinciden en una sola.");
+                stepItems.push("Calculamos: \\[x = \\frac{-b}{2a} = \\frac{-(" + formatNum(b) + ")}{2\\cdot(" + formatNum(a) + ")} = " + formatNum(x) + "\\]");
+            } else {
+                resultHtml += "<p class='sol'>No hay soluciones reales (en numeros reales).</p>";
+                stepItems.push("Como \\(\\Delta < 0\\), no existe raiz cuadrada real de \\(\\Delta\\).");
+                stepItems.push("Por eso, la ecuacion no tiene soluciones reales. En cursos mas avanzados se estudian soluciones complejas.");
+            }
+
+            resultBox.innerHTML = resultHtml;
+            stepsBox.innerHTML = "<h2>Pasos</h2><ol>" + stepItems.map((step) => "<li>" + step + "</li>").join("") + "</ol>";
+            runMathJax();
+        });
+    </script>
+</body>
+</html>
