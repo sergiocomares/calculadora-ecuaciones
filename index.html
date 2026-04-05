@@ -147,8 +147,8 @@
         button {
             border: none;
             border-radius: 14px;
-            padding: 12px 18px;
-            font-size: 1rem;
+            padding: 14px 20px;
+            font-size: 1.05rem;
             font-weight: 700;
             font-family: inherit;
             background: linear-gradient(120deg, #58a6ff, #2f80ed);
@@ -164,6 +164,22 @@
 
         button:active {
             transform: translateY(0);
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 6px;
+        }
+
+        .actions button {
+            flex: 1 1 220px;
+        }
+
+        .secondary {
+            background: linear-gradient(120deg, #7ccfa8, #49a879);
+            box-shadow: 0 8px 18px rgba(33, 134, 85, 0.25);
         }
 
         .result,
@@ -189,6 +205,16 @@
             border-radius: 12px;
             padding: 10px 12px;
             font-weight: 700;
+        }
+
+        .motivation {
+            margin-top: 12px;
+            border: 1px solid #bee9d3;
+            background: #f1fff7;
+            color: #1f6f4d;
+            border-radius: 12px;
+            padding: 10px 12px;
+            font-weight: 800;
         }
 
         .message-error {
@@ -254,6 +280,10 @@
             .inputs {
                 grid-template-columns: 1fr;
             }
+
+            .actions {
+                flex-direction: column;
+            }
         }
     </style>
 </head>
@@ -283,9 +313,13 @@
             </div>
         </section>
 
-        <button id="solveBtn" type="button">Resolver</button>
+        <div class="actions">
+            <button id="solveBtn" type="button">Resolver</button>
+            <button id="randomBtn" class="secondary" type="button">Generar ejemplo aleatorio</button>
+        </div>
 
         <div class="error-box" id="errorBox" role="alert" aria-live="assertive" hidden></div>
+        <div class="motivation" id="motivationBox" aria-live="polite">Escribe tus valores y vamos paso a paso. Tu puedes.</div>
 
         <section class="result" id="result" aria-live="polite">
             <h2>Soluciones</h2>
@@ -317,9 +351,11 @@
         const bInput = document.getElementById("b");
         const cInput = document.getElementById("c");
         const solveBtn = document.getElementById("solveBtn");
+        const randomBtn = document.getElementById("randomBtn");
         const resultBox = document.getElementById("result");
         const stepsBox = document.getElementById("steps");
         const errorBox = document.getElementById("errorBox");
+        const motivationBox = document.getElementById("motivationBox");
 
         function runMathJax() {
             if (window.MathJax && typeof window.MathJax.typesetPromise === "function") {
@@ -331,11 +367,16 @@
             [aInput, bInput, cInput].forEach((input) => input.classList.remove("input-error"));
         }
 
+        function setMotivation(message) {
+            motivationBox.textContent = message;
+        }
+
         function showError(message, invalidInputs) {
             clearInputErrors();
             invalidInputs.forEach((input) => input.classList.add("input-error"));
             errorBox.textContent = message;
             errorBox.hidden = false;
+            setMotivation("Revisa los datos y vuelve a intentarlo. Puedes hacerlo.");
             resultBox.innerHTML = "<h2>Soluciones</h2><p class='message-error'>No se puede resolver hasta corregir los datos.</p>";
             stepsBox.innerHTML = "<h2>Pasos</h2><p>Primero corrige el error indicado y vuelve a pulsar resolver.</p>";
             runMathJax();
@@ -364,6 +405,50 @@
             }
             return Number(value.toFixed(4)).toString();
         }
+
+        function randomFrom(list) {
+            return list[Math.floor(Math.random() * list.length)];
+        }
+
+        randomBtn.addEventListener("click", () => {
+            const easy = [-6, -5, -4, -3, -2, -1, 1, 2, 3, 4, 5, 6];
+            const roots = [-4, -3, -2, -1, 1, 2, 3, 4];
+            const mode = Math.random();
+            let a;
+            let b;
+            let c;
+
+            if (mode < 0.5) {
+                const r1 = randomFrom(roots);
+                const r2 = randomFrom(roots);
+                a = randomFrom([-2, -1, 1, 2]);
+                b = -a * (r1 + r2);
+                c = a * r1 * r2;
+            } else if (mode < 0.8) {
+                const r = randomFrom(roots);
+                a = randomFrom([-2, -1, 1, 2]);
+                b = -2 * a * r;
+                c = a * r * r;
+            } else {
+                a = randomFrom([-2, -1, 1, 2]);
+                b = randomFrom(easy);
+                c = randomFrom(easy);
+                if (b * b - 4 * a * c >= 0) {
+                    c += 4 * a;
+                }
+            }
+
+            if (a === 0) {
+                a = 1;
+            }
+
+            aInput.value = String(a);
+            bInput.value = String(b);
+            cInput.value = String(c);
+            clearInputErrors();
+            hideError();
+            setMotivation("Ejemplo generado. Ahora pulsa Resolver. ¡Buen trabajo!");
+        });
 
         solveBtn.addEventListener("click", () => {
             clearInputErrors();
@@ -402,11 +487,12 @@
 
             let resultHtml = "<h2>Soluciones</h2>";
             resultHtml += "<span class='badge'>Resultado final</span>";
+            resultHtml += "<p>Vamos a resolver: \\[" + formatNum(a) + "x^2 + (" + formatNum(b) + ")x + (" + formatNum(c) + ") = 0\\]</p>";
 
             let stepItems = [
-                "Sustituimos en la ecuacion general: \\[" + formatNum(a) + "x^2 + (" + formatNum(b) + ")x + (" + formatNum(c) + ") = 0\\]",
-                "Calculamos el discriminante con la formula \\(\\Delta = b^2 - 4ac\\).",
-                "Sustitucion: \\[\\Delta = (" + formatNum(b) + ")^2 - 4\\cdot(" + formatNum(a) + ")\\cdot(" + formatNum(c) + ") = " + formatNum(delta) + "\\]"
+                "Paso 1: Escribimos la ecuacion y miramos la formula general.\\[ax^2 + bx + c = 0,\\quad x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}\\]",
+                "Paso 2: Sustituimos los valores de a, b y c.\\[" + formatNum(a) + "x^2 + (" + formatNum(b) + ")x + (" + formatNum(c) + ") = 0\\]",
+                "Paso 3: Calculamos el discriminante con calma.\\[\\Delta = b^2 - 4ac = (" + formatNum(b) + ")^2 - 4\\cdot(" + formatNum(a) + ")\\cdot(" + formatNum(c) + ") = " + formatNum(delta) + "\\]"
             ];
 
             resultHtml += "<div class='disc-box'><p class='disc-title'>Discriminante destacado</p><div>\\[\\Delta = " + formatNum(delta) + "\\]</div></div>";
@@ -416,26 +502,29 @@
                 const x1 = (-b + sqrtDelta) / denominator;
                 const x2 = (-b - sqrtDelta) / denominator;
 
-                resultHtml += "<p class='sol'>Hay dos soluciones reales:</p>";
+                resultHtml += "<p class='sol'><strong>Tipo de solucion: dos soluciones reales</strong></p>";
                 resultHtml += "<p class='sol'><strong>\\(x_1 = " + formatNum(x1) + "\\)</strong></p>";
                 resultHtml += "<p class='sol'><strong>\\(x_2 = " + formatNum(x2) + "\\)</strong></p>";
+                setMotivation("¡Buen trabajo! Has encontrado dos soluciones reales.");
 
-                stepItems.push("Como \\(\\Delta > 0\\), hay dos soluciones reales distintas.");
-                stepItems.push("Aplicamos la formula: \\[x = \\frac{-b \\pm \\sqrt{\\Delta}}{2a}\\]");
-                stepItems.push("Primera solucion: \\[x_1 = \\frac{-(" + formatNum(b) + ") + \\sqrt{" + formatNum(delta) + "}}{2\\cdot(" + formatNum(a) + ")} = " + formatNum(x1) + "\\]");
-                stepItems.push("Segunda solucion: \\[x_2 = \\frac{-(" + formatNum(b) + ") - \\sqrt{" + formatNum(delta) + "}}{2\\cdot(" + formatNum(a) + ")} = " + formatNum(x2) + "\\]");
+                stepItems.push("Paso 4: Como \\(\\Delta > 0\\), tenemos dos soluciones reales.");
+                stepItems.push("Paso 5: Calculamos cada solucion.\\[x_1 = \\frac{-(" + formatNum(b) + ") + \\sqrt{" + formatNum(delta) + "}}{2\\cdot(" + formatNum(a) + ")} = " + formatNum(x1) + "\\]");
+                stepItems.push("Paso 6: Segunda solucion.\\[x_2 = \\frac{-(" + formatNum(b) + ") - \\sqrt{" + formatNum(delta) + "}}{2\\cdot(" + formatNum(a) + ")} = " + formatNum(x2) + "\\]");
             } else if (delta === 0) {
                 const x = -b / denominator;
 
-                resultHtml += "<p class='sol'>Hay una solucion real doble:</p>";
+                resultHtml += "<p class='sol'><strong>Tipo de solucion: una solucion</strong></p>";
                 resultHtml += "<p class='sol'><strong>\\(x = " + formatNum(x) + "\\)</strong></p>";
+                setMotivation("¡Buen trabajo! Has encontrado una solucion.");
 
-                stepItems.push("Como \\(\\Delta = 0\\), las dos soluciones coinciden en una sola.");
-                stepItems.push("Calculamos: \\[x = \\frac{-b}{2a} = \\frac{-(" + formatNum(b) + ")}{2\\cdot(" + formatNum(a) + ")} = " + formatNum(x) + "\\]");
+                stepItems.push("Paso 4: Como \\(\\Delta = 0\\), solo hay una solucion.");
+                stepItems.push("Paso 5: Calculamos la solucion.\\[x = \\frac{-b}{2a} = \\frac{-(" + formatNum(b) + ")}{2\\cdot(" + formatNum(a) + ")} = " + formatNum(x) + "\\]");
             } else {
-                resultHtml += "<p class='sol'>No hay soluciones reales (en numeros reales).</p>";
-                stepItems.push("Como \\(\\Delta < 0\\), no existe raiz cuadrada real de \\(\\Delta\\).");
-                stepItems.push("Por eso, la ecuacion no tiene soluciones reales. En cursos mas avanzados se estudian soluciones complejas.");
+                resultHtml += "<p class='sol'><strong>Tipo de solucion: sin solucion real</strong></p>";
+                resultHtml += "<p class='sol'>No hay soluciones en los numeros reales.</p>";
+                setMotivation("Buen intento. Revisa los datos o prueba otro ejemplo.");
+                stepItems.push("Paso 4: Como \\(\\Delta < 0\\), no podemos hacer la raiz cuadrada en reales.");
+                stepItems.push("Paso 5: Concluimos que no hay solucion real.");
             }
 
             resultBox.innerHTML = resultHtml;
